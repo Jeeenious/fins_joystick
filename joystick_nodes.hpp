@@ -18,7 +18,7 @@ public:
   void define() override {
     set_name("JoystickSource");
     set_description("读取游戏手柄，输出原始摇杆/十字键/按钮数据");
-    set_category("Robot");
+    set_category("Joystick");
     register_output<std::string>("axes");
     register_output<std::string>("hat");
     register_output<std::string>("buttons");
