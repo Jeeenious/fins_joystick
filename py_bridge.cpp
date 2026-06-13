@@ -1,0 +1,81 @@
+/*******************************************************************************
+ * py_bridge.cpp — pybind11::embed 实现，按步调 joystick_py.controller
+ ******************************************************************************/
+
+#include "py_bridge.hpp"
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
+
+static py::object g_ctrl;
+
+void py_bridge::init() {
+  static bool inited = false;
+  if (inited) return;
+  inited = true;
+
+  py::initialize_interpreter();
+
+  py::module_ sys = py::module_::import("sys");
+  py::list path = sys.attr("path");
+  path.attr("insert")(0, PY_PROJECT_DIR);
+
+  try {
+    py::module_::import("joystick_py.controller");
+    py::print("[py_bridge] joystick_py 导入成功");
+  } catch (py::error_already_set &e) {
+    py::print("[py_bridge] Python 导入失败:", e.what());
+    throw;
+  }
+}
+
+bool py_bridge::open_controller() {
+  init();
+  py::module_ m = py::module_::import("joystick_py.controller");
+  g_ctrl = m.attr("RemoteController")();
+  return g_ctrl.attr("open")().cast<bool>();
+}
+
+std::string py_bridge::get_axes() {
+  init();
+  py::tuple axes = g_ctrl.attr("get_axes")();
+  return std::to_string(axes[0].cast<float>()) + "," +
+         std::to_string(axes[1].cast<float>()) + "," +
+         std::to_string(axes[2].cast<float>()) + "," +
+         std::to_string(axes[3].cast<float>());
+}
+
+std::string py_bridge::get_hat() {
+  init();
+  py::tuple hat = g_ctrl.attr("get_hat")();
+  return std::to_string(hat[0].cast<int>()) + "," +
+         std::to_string(hat[1].cast<int>());
+}
+
+std::string py_bridge::get_buttons() {
+  init();
+  py::list btns = g_ctrl.attr("get_pressed_buttons")();
+  std::string result;
+  for (size_t i = 0; i < btns.size(); ++i) {
+    if (i > 0) result += ",";
+    result += std::to_string(btns[i].cast<int>());
+  }
+  return result;
+}
+
+bool py_bridge::pump_events() {
+  init();
+  py::module_ pygame = py::module_::import("pygame");
+  py::list events = pygame.attr("event").attr("get")();
+  for (auto e : events) {
+    if (e.attr("type").cast<int>() == pygame.attr("QUIT").cast<int>())
+      return false;
+  }
+  return true;
+}
+
+void py_bridge::close_controller() {
+  init();
+  py::module_::import("pygame").attr("quit")();
+}
