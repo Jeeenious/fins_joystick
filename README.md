@@ -47,15 +47,43 @@ FINS 框架调用 run()
 
 | 端口        | 格式                         | 示例                     |
 | --------- | -------------------------- | ---------------------- |
-| `axes`    | `左水平,左垂直,右水平,右垂直`(float×4) | `0.52,-0.31,0.10,0.85` |
-| `hat`     | `十字键X,十字键Y`(int×2, -1/0/1) | `0,1`                  |
+| `axes`    | `左水平,左垂直,右水平,右垂直`(floatx4) | `0.52,-0.31,0.10,0.85` |
+| `hat`     | `十字键X,十字键Y`(intx2, -1/0/1) | `0,1`                  |
 | `buttons` | 按下按钮编号列表(int,...)          | `4,7`                  |
 
 ## 管线组合
 
 ```
-JoystickSource → axes/hat/buttons → fins_joystick_solver → motion/servo/gripper → fins_serial → TCP
+JoystickSource -> axes/hat/buttons -> fins_joystick_solver -> motion/servo/gripper -> fins_serial -> TCP
 ```
+
+## Python C 扩展加载修复
+
+pybind11 embed 模式下，Python C 扩展（如 pygame）加载时会报 `undefined symbol: PyFloat_Type`，因为 libpython 的 C API 符号未暴露到全局符号表。
+
+**修复原理**：在 `py::initialize_interpreter()` 之前，用 `dlopen` + `RTLD_GLOBAL` 将 libpython 注入全局符号表：
+
+```cpp
+// py_bridge.cpp
+dlopen(PYTHON_LIBRARY_PATH, RTLD_NOW | RTLD_GLOBAL);
+py::initialize_interpreter();
+```
+
+`PYTHON_LIBRARY_PATH` 由 CMake 编译时自动探测，避免硬编码绝对路径：
+
+```cmake
+# CMakeLists.txt
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c
+    "import sysconfig; print(sysconfig.get_config_var('LIBDIR') + '/' + sysconfig.get_config_var('LDLIBRARY'))"
+  OUTPUT_VARIABLE PYTHON_LIBRARY_PATH
+)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  PYTHON_LIBRARY_PATH="${PYTHON_LIBRARY_PATH}"
+)
+```
+
+换机器换 Python 版本均自动适配。
 
 ## 编译
 

@@ -5,6 +5,7 @@
 #include "py_bridge.hpp"
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
+#include <dlfcn.h>
 
 namespace py = pybind11;
 
@@ -14,6 +15,9 @@ void py_bridge::init() {
   static bool inited = false;
   if (inited) return;
   inited = true;
+
+  // CMake 编译时自动探测 libpython 路径，注入全局符号表使 C 扩展可用
+  dlopen(PYTHON_LIBRARY_PATH, RTLD_NOW | RTLD_GLOBAL);
 
   py::initialize_interpreter();
 
