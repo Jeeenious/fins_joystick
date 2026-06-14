@@ -19,7 +19,8 @@ void py_bridge::init() {
   // CMake 编译时自动探测 libpython 路径，注入全局符号表使 C 扩展可用
   dlopen(PYTHON_LIBRARY_PATH, RTLD_NOW | RTLD_GLOBAL);
 
-  py::initialize_interpreter();
+  if (!Py_IsInitialized())
+    py::initialize_interpreter();
 
   py::module_ sys = py::module_::import("sys");
   py::list path = sys.attr("path");
@@ -41,31 +42,24 @@ bool py_bridge::open_controller() {
   return g_ctrl.attr("open")().cast<bool>();
 }
 
-std::string py_bridge::get_axes() {
+float py_bridge::get_lh() { init(); return g_ctrl.attr("get_axes")().attr("__getitem__")(0).cast<float>(); }
+float py_bridge::get_lv() { init(); return g_ctrl.attr("get_axes")().attr("__getitem__")(1).cast<float>(); }
+float py_bridge::get_rh() { init(); return g_ctrl.attr("get_axes")().attr("__getitem__")(2).cast<float>(); }
+float py_bridge::get_rv() { init(); return g_ctrl.attr("get_axes")().attr("__getitem__")(3).cast<float>(); }
+
+int py_bridge::get_hat_x() {
   init();
-  py::tuple axes = g_ctrl.attr("get_axes")();
-  return std::to_string(axes[0].cast<float>()) + "," +
-         std::to_string(axes[1].cast<float>()) + "," +
-         std::to_string(axes[2].cast<float>()) + "," +
-         std::to_string(axes[3].cast<float>());
+  return g_ctrl.attr("get_hat")().attr("__getitem__")(0).cast<int>();
 }
 
-std::string py_bridge::get_hat() {
+int py_bridge::get_hat_y() {
   init();
-  py::tuple hat = g_ctrl.attr("get_hat")();
-  return std::to_string(hat[0].cast<int>()) + "," +
-         std::to_string(hat[1].cast<int>());
+  return g_ctrl.attr("get_hat")().attr("__getitem__")(1).cast<int>();
 }
 
-std::string py_bridge::get_buttons() {
+bool py_bridge::get_button(int idx) {
   init();
-  py::list btns = g_ctrl.attr("get_pressed_buttons")();
-  std::string result;
-  for (size_t i = 0; i < btns.size(); ++i) {
-    if (i > 0) result += ",";
-    result += std::to_string(btns[i].cast<int>());
-  }
-  return result;
+  return g_ctrl.attr("is_button_down")(idx).cast<bool>();
 }
 
 bool py_bridge::pump_events() {

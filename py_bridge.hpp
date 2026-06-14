@@ -3,16 +3,18 @@
  ******************************************************************************/
 #pragma once
 
-#include <string>
-
 namespace py_bridge {
 
 void init();
 bool open_controller();
-std::string get_axes();       // "lh,lv,rh,rv"
-std::string get_hat();         // "hx,hy"
-std::string get_buttons();     // "b1,b2,..."
-bool pump_events();            // true 表示继续，false 表示 QUIT
-void close_controller();
+float get_lh();            // 左摇杆水平 (-1..1)
+float get_lv();            // 左摇杆垂直 (-1..1)
+float get_rh();            // 右摇杆水平 (-1..1)
+float get_rv();            // 右摇杆垂直 (-1..1)
+int   get_hat_x();         // 十字键 X (-1/0/1)
+int   get_hat_y();         // 十字键 Y (-1/0/1)
+bool  get_button(int idx); // 按钮 idx 是否按下
+bool  pump_events();       // true 表示继续，false 表示 QUIT
+void  close_controller();
 
 }  // namespace py_bridge

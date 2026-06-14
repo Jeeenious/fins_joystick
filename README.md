@@ -45,16 +45,18 @@ FINS 框架调用 run()
 
 ## 输出端口
 
-| 端口        | 格式                         | 示例                     |
-| --------- | -------------------------- | ---------------------- |
-| `axes`    | `左水平,左垂直,右水平,右垂直`(floatx4) | `0.52,-0.31,0.10,0.85` |
-| `hat`     | `十字键X,十字键Y`(intx2, -1/0/1) | `0,1`                  |
-| `buttons` | 按下按钮编号列表(int,...)          | `4,7`                  |
+| 端口 | 类型 | 内容 | 示例 |
+|------|------|------|------|
+| `axes` | `array<float,4>` | `{lh, lv, rh, rv}` | `{0.52, -0.31, 0.10, 0.85}` |
+| `hat` | `array<int,2>` | `{hx, hy}` (-1/0/1) | `{0, 1}` |
+| `buttons` | `vector<int>` | 按下的按钮号列表 | `{4, 7}` |
 
 ## 管线组合
 
 ```
-JoystickSource -> axes/hat/buttons -> fins_joystick_solver -> motion/servo/gripper -> fins_serial -> TCP
+JoystickSource → axes(array<float,4>) / hat(array<int,2>) / buttons(vector<int>)
+  → fins_joystick_solver → motion(array<float,4>) / servo(array<int,2>) / gripper(int)
+  → fins_tcp → AA55 → TCP → PI
 ```
 
 ## Python C 扩展加载修复

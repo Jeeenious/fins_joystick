@@ -1,11 +1,17 @@
 /*******************************************************************************
  * joystick_nodes.hpp — Joystick 手柄数据源 FINS 节点
+ *
+ * 输出端口:
+ *   lh / lv / rh / rv    → float   摇杆四轴 (-1..1)
+ *   hat_x / hat_y        → int     十字键 (-1/0/1)
+ *   btn_0 .. btn_15     → bool    按钮按下状态
  ******************************************************************************/
 
 #pragma once
 
 #include <atomic>
 #include <chrono>
+#include <string>
 #include <thread>
 
 #include <fins/node.hpp>
@@ -19,9 +25,14 @@ public:
     set_name("JoystickSource");
     set_description("读取游戏手柄，输出原始摇杆/十字键/按钮数据");
     set_category("Joystick");
-    register_output<std::string>("axes");
-    register_output<std::string>("hat");
-    register_output<std::string>("buttons");
+    register_output<float>("lh");
+    register_output<float>("lv");
+    register_output<float>("rh");
+    register_output<float>("rv");
+    register_output<int>("hat_x");
+    register_output<int>("hat_y");
+    for (int i = 0; i < 16; ++i)
+      register_output<bool>("btn_" + std::to_string(i));
   }
 
   void initialize() override {
@@ -47,13 +58,14 @@ public:
           break;
         }
 
-        auto axes = py_bridge::get_axes();
-        auto hat = py_bridge::get_hat();
-        auto btns = py_bridge::get_buttons();
-
-        if (!axes.empty()) send("axes", axes);
-        if (!hat.empty()) send("hat", hat);
-        if (!btns.empty()) send("buttons", btns);
+        send("lh", py_bridge::get_lh());
+        send("lv", py_bridge::get_lv());
+        send("rh", py_bridge::get_rh());
+        send("rv", py_bridge::get_rv());
+        send("hat_x", py_bridge::get_hat_x());
+        send("hat_y", py_bridge::get_hat_y());
+        for (int i = 0; i < 16; ++i)
+          send("btn_" + std::to_string(i), py_bridge::get_button(i));
 
         std::this_thread::sleep_for(std::chrono::milliseconds(33));
       }
