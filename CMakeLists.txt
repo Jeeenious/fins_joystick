@@ -5,7 +5,6 @@ project(fins_joystick)
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11 REQUIRED)
 
-# 自动获取 libpython 绝对路径，避免硬编码
 execute_process(
   COMMAND ${Python3_EXECUTABLE} -c
     "import sysconfig; print(sysconfig.get_config_var('LIBDIR') + '/' + sysconfig.get_config_var('LDLIBRARY'))"

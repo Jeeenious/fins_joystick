@@ -4,4 +4,4 @@
 
 #include "joystick_nodes.hpp"
 
-DEFINE_PLUGIN_ENTRY(fins::STATELESS)
+DEFINE_PLUGIN_ENTRY(fins::STATEFUL)
